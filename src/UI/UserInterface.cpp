@@ -1517,7 +1517,7 @@ static void CreatePendantJogTabFields(const ColourScheme& colours)
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 
-	static const float jogAmountValues[] = { 0.01, 0.10, 1.00 /*, 5.00 */ };
+	static const float jogAmountValues[] = { 0.01, 0.10, 1.00, 10.00  };
 
 	// Distance per click
 	currentJogAmount = CreateFloatButtonColumn(
