@@ -845,7 +845,7 @@ void PortraitDisplay(const bool withTouch)
 	lcd.setOrientation(portrait, IS_ER, true);
 	if (withTouch)
 	{
-		DisplayOrientation portraitTouch = static_cast<DisplayOrientation>(nvData.touchOrientation ^ (SwapXY | ReverseX));
+		DisplayOrientation portraitTouch = static_cast<DisplayOrientation>(nvData.touchOrientation ^ (SwapXY | ReverseY));
 		touch.init(DisplayXP, DisplayYP, portraitTouch);
 		touch.calibrate(nvData.ymin, nvData.ymax, nvData.xmin, nvData.xmax, touchCalibMargin);
 	}
