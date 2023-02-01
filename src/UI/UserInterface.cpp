@@ -1926,6 +1926,7 @@ namespace UI
 		mgr.Show(cancelButton,		false);
 		mgr.Show(pauseButton,		false);
 		mgr.Show(printProgressBar,	false);
+		mgr.Show(babystepButton,	false);
 
 		mgr.Show(resumeButtonP,		false);
 		mgr.Show(resetButtonP,		false);
@@ -2271,15 +2272,15 @@ namespace UI
 				timesLeft[0] = timesLeft[1] = timesLeft[2] = 0;
 			}
 			SetLastFileSimulated(newStatus == OM::PrinterStatus::simulating);
+			if (oldStatus != newStatus)
+			{
+				PrintStarted();
+			}
 			[[fallthrough]];
 		case OM::PrinterStatus::paused:
 		case OM::PrinterStatus::pausing:
 		case OM::PrinterStatus::resuming:
-			if (oldStatus == OM::PrinterStatus::connecting || oldStatus == OM::PrinterStatus::idle)
-			{
-				PrintStarted();
-			}
-			else if (currentTab == tabStatus)
+			if (currentTab == tabStatus)
 			{
 				nameField->SetValue(printingFile.c_str());
 			}
