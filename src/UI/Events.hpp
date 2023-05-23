@@ -98,7 +98,8 @@ enum Event : uint8_t
 
 	evEmergencyStop,
 
-	evJogZ, evCloseAlert
+	evJogZ,
+	evCloseAlert, evOkAlert, evChoiceAlert, evEditAlert
 };
 
 #endif /* SRC_UI_EVENTS_HPP_ */

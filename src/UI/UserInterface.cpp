@@ -20,6 +20,8 @@
 
 #include "Icons/Icons.hpp"
 #include "Library/Misc.hpp"
+#include "ObjectModel/BedOrChamber.hpp"
+#include "ObjectModel/PrinterStatus.hpp"
 #include "PanelDue.hpp"
 #include "Version.hpp"
 
@@ -34,7 +36,6 @@
 
 #include <UI/MessageLog.hpp>
 #include <UI/Popup.hpp>
-#include <UI/Strings.hpp>
 #include <UI/UserInterfaceConstants.hpp>
 
 MainWindow mgr;
@@ -96,7 +97,7 @@ static SingleButton *tabControl, *tabStatus, *tabMsg, *tabSetup, *tabPortrait;
 static ButtonBase *filesButton, *pauseButton, *resumeButton, *cancelButton, *babystepButton, *reprintButton;
 static TextField *timeLeftField, *zProbe;
 static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField, *fpPrintTimeField;
-static DrawDirect *fpThumbnail;
+DrawDirect *fpThumbnail;
 static StaticTextField *moveAxisRows[MaxDisplayableAxes];
 static StaticTextField *nameField, *statusField;
 static StaticTextField *screensaverText;
@@ -109,6 +110,7 @@ static PopupWindow *babystepPopup;
 static AlertPopup *alertPopup;
 static CharButtonRow *keyboardRows[4];
 static const char* _ecv_array const * _ecv_array currentKeyboard;
+static void (*keyboardDataHandler)(const char *data) = nullptr;
 
 // private fields
 static TextButton *macroButtonsP[NumDisplayedMacrosP];
@@ -553,6 +555,19 @@ const char * _ecv_array StripPrefix(const char * _ecv_array dir)
 		}
 	}
 	return dir;
+}
+
+
+static void SendGcode(const char *data)
+{
+	SerialIo::Sendf("%s\n", data);
+}
+
+static void PopupEditData(const char *data)
+{
+	alertPopup->UpdateData(data);
+	dbg("received data %s\n", data);
+	mgr.ClearPopup(true, keyboardPopup);
 }
 
 // Adjust the brightness
@@ -1178,6 +1193,8 @@ static void CreateKeyboardPopup(uint32_t language, ColourScheme colours)
 	keyboardPopup->AddField(new TextButton(row, popupSideMargin + wideKeyButtonWidth + keyButtonHSpace, 2 * wideKeyButtonWidth, "", evKey, (int)' '));
 	DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.buttonImageBackColour);
 	keyboardPopup->AddField(new IconButton(row, popupSideMargin + 3 * wideKeyButtonWidth + 2 * keyButtonHSpace, wideKeyButtonWidth, IconEnter, evSendKeyboardCommand));
+
+	keyboardDataHandler = SendGcode;
 }
 
 // Create the babystep popup
@@ -1330,29 +1347,29 @@ static DisplayField *CreatePrintingTabFields(const ColourScheme& colours)
 	}
 
 	// Speed button
-	mgr.AddField(spd = new IntegerButton(row7, speedColumn, fanColumn - speedColumn - fieldSpacing, strings->speed, "%"));
+	mgr.AddField(spd = new IntegerButton(row7, speedColumn, stateColumnWdith - fieldSpacing, strings->speed, "%"));
 	spd->SetValue(100);
 	spd->SetEvent(evAdjustSpeed, "M220 S");
 
 	// Fan button
-	mgr.AddField(fanSpeed = new IntegerButton(row7, fanColumn, pauseColumn - fanColumn - fieldSpacing, strings->fan, "%"));
+	mgr.AddField(fanSpeed = new IntegerButton(row7, fanColumn, stateColumnWdith - fieldSpacing, strings->fan, "%"));
 	fanSpeed->SetEvent(evAdjustFan, 0);
 	fanSpeed->SetValue(0);
 
-	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.pauseButtonBackColour);
-	pauseButton = new TextButton(row7, pauseColumn, babystepColumn - pauseColumn - fieldSpacing, strings->pause, evPausePrint, "M25");
-	mgr.AddField(pauseButton);
-
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	babystepButton = new TextButton(row7, babystepColumn, DisplayX - babystepColumn - margin, strings->babystep, evBabyStepPopup);
+	babystepButton = new TextButton(row7, babystepColumn, stateColumnWdith - fieldSpacing, strings->babystep, evBabyStepPopup);
 	mgr.AddField(babystepButton);
 
+	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.pauseButtonBackColour);
+	pauseButton = new TextButton(row7, pauseColumn, stateColumnWdith - (2 * margin), strings->pause, evPausePrint, "M25");
+	mgr.AddField(pauseButton);
+
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.resumeButtonBackColour);
-	resumeButton = new TextButton(row7, resumeColumn, cancelColumn - resumeColumn - fieldSpacing, strings->resume, evResumePrint, "M24");
+	resumeButton = new TextButton(row7, resumeColumn, stateColumnWdith - (2 * margin), strings->resume, evResumePrint, "M24");
 	mgr.AddField(resumeButton);
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.resetButtonBackColour);
-	cancelButton = new TextButton(row7, cancelColumn, DisplayX - cancelColumn - margin, strings->cancel, evReset, "M0");
+	cancelButton = new TextButton(row7, cancelColumn, stateColumnWdith - (2 * margin), strings->cancel, evReset, "M0");
 	mgr.AddField(cancelButton);
 
 #if DISPLAY_X == 800
@@ -1382,7 +1399,7 @@ static DisplayField *CreatePrintingTabFields(const ColourScheme& colours)
 			row8
 #endif
 			;
-	reprintButton = new TextButton(reprintRow, speedColumn, pauseColumn - speedColumn - fieldSpacing, strings->reprint, evReprint);
+	reprintButton = new TextButton(reprintRow, speedColumn, 2 * stateColumnWdith - fieldSpacing, strings->reprint, evReprint);
 	reprintButton->Show(false);
 	mgr.AddField(reprintButton);
 
@@ -1926,7 +1943,7 @@ namespace UI
 		mgr.Show(cancelButton,		false);
 		mgr.Show(pauseButton,		false);
 		mgr.Show(printProgressBar,	false);
-		mgr.Show(babystepButton,	false);
+		mgr.Show(babystepButton,	true);
 
 		mgr.Show(resumeButtonP,		false);
 		mgr.Show(resetButtonP,		false);
@@ -1965,12 +1982,12 @@ namespace UI
 		// First hide everything removed then show everything new
 		// otherwise remnants of the to-be-hidden might remain
 		mgr.Show(pauseButton,		false);
-		mgr.Show(babystepButton,	false);
 		mgr.Show(filesButton,		false);
 		mgr.Show(reprintButton,		false);
 
 		mgr.Show(pauseButtonP,		false);
 
+		mgr.Show(babystepButton,	true);
 		mgr.Show(resumeButton,		true);
 		mgr.Show(cancelButton,		true);
 		mgr.Show(printProgressBar,	true);
@@ -2233,8 +2250,8 @@ namespace UI
 		}
 	}
 
-	static int timesLeft[3];
-	enum TimesLeft { file, filament, slicer };
+	enum TimesLeft { file, filament, slicer, max };
+	static int timesLeft[TimesLeft::max];
 	static uint32_t simulatedTime;
 	static uint32_t jobDuration;
 	static uint32_t jobWarmUpDuration;
@@ -2270,6 +2287,7 @@ namespace UI
 			{
 				// Starting a new print, so clear the times
 				timesLeft[0] = timesLeft[1] = timesLeft[2] = 0;
+				simulatedTime = 0;
 			}
 			SetLastFileSimulated(newStatus == OM::PrinterStatus::simulating);
 			if (oldStatus != newStatus)
@@ -2449,6 +2467,7 @@ namespace UI
 		case evTabMsg:
 			mgr.SetRoot(messageRoot);
 			if (keyboardIsDisplayed) {
+				keyboardDataHandler = SendGcode;
 				mgr.SetPopup(keyboardPopup, AutoPlace, keyboardPopupY, false);
 			}
 			break;
@@ -2553,6 +2572,7 @@ namespace UI
 	// Pop up the keyboard
 	void ShowKeyboard()
 	{
+		keyboardDataHandler = SendGcode;
 		mgr.SetPopup(keyboardPopup, AutoPlace, keyboardPopupY);
 		keyboardIsDisplayed = true;
 	}
@@ -3060,7 +3080,7 @@ namespace UI
 	{
 		if (isLandscape)
 		{
-			alertPopup->Set(alert.title.c_str(), alert.text.c_str(), alert.mode, alert.controls);
+			alertPopup->Set(alert);
 			mgr.SetPopup(alertPopup, AutoPlace, AutoPlace);
 		}
 		else
@@ -3361,6 +3381,12 @@ namespace UI
 		case evAdjustColours:
 		case evAdjustLanguage:
 			break;
+		case evOkAlert:
+		case evCloseAlert:
+		case evChoiceAlert:
+			mgr.Press(bp, false);
+			ClearAlertOrResponse();
+			break;
 		default:
 			mgr.Press(bp, false);
 			break;
@@ -3543,30 +3569,18 @@ namespace UI
 					case evAdjustBedActiveTemp:
 					case evAdjustChamberActiveTemp:
 						{
-							int bedOrChamberIndex = bp.GetIParam();
+							int index = fieldBeingAdjusted.GetIParam();
 							const bool isBed = eventOfFieldBeingAdjusted == evAdjustBedActiveTemp;
-							const auto bedOrChamber = isBed ? OM::GetBed(bedOrChamberIndex) : OM::GetChamber(bedOrChamberIndex);
-							if (bedOrChamber == nullptr)
-							{
-								break;
-							}
-							const auto heaterIndex = bedOrChamber->index;
-							SerialIo::Sendf("M14%d P%d S%d\n", isBed ? 0 : 1, heaterIndex, val);
+							SerialIo::Sendf("%s P%d S%d\n", isBed ? "M140" : "M141", index, val);
 						}
 						break;
 
 					case evAdjustBedStandbyTemp:
 					case evAdjustChamberStandbyTemp:
 						{
-							int bedOrChamberIndex = bp.GetIParam();
+							int index = fieldBeingAdjusted.GetIParam();
 							const bool isBed = eventOfFieldBeingAdjusted == evAdjustBedStandbyTemp;
-							const auto bedOrChamber = isBed ? OM::GetBed(bedOrChamberIndex) : OM::GetChamber(bedOrChamberIndex);
-							if (bedOrChamber == nullptr)
-							{
-								break;
-							}
-							const auto heaterIndex = bedOrChamber->index;
-							SerialIo::Sendf("M14%d P%d R%d\n", isBed ? 0 : 1, heaterIndex, val);
+							SerialIo::Sendf("%s P%d R%d\n", isBed ? "M140" : "M141", index, val);
 						}
 						break;
 
@@ -4331,7 +4345,10 @@ namespace UI
 			case evSendKeyboardCommand:
 				if (userCommandBuffers[currentUserCommandBuffer].strlen() != 0)
 				{
-					SerialIo::Sendf("%s\n", userCommandBuffers[currentUserCommandBuffer].c_str());
+					if (keyboardDataHandler)
+					{
+						keyboardDataHandler(userCommandBuffers[currentUserCommandBuffer].c_str());
+					}
 
 					// Add the command to the history if it was different frmo the previous command
 					size_t prevBuffer = (currentUserCommandBuffer + numUserCommandBuffers - 1) % numUserCommandBuffers;
@@ -4345,9 +4362,22 @@ namespace UI
 				}
 				break;
 
+			case evOkAlert:
+				alertPopup->ProcessOkButton();
+				break;
+
 			case evCloseAlert:
 				SerialIo::Sendf("%s\n", bp.GetSParam());
-				ClearAlertOrResponse();
+				break;
+
+			case evChoiceAlert:
+				alertPopup->ProcessChoice(bp.GetIParam());
+				break;
+
+			case evEditAlert:
+				keyboardDataHandler = PopupEditData;
+				mgr.SetPopup(keyboardPopup, AutoPlace, keyboardPopupY);
+				keyboardIsDisplayed = true;
 				break;
 
 			default:
@@ -4638,9 +4668,9 @@ namespace UI
 					slot,
 					true,
 					isBed ? evAdjustBedActiveTemp : evAdjustChamberActiveTemp,
-					bedOrChamber->heater,
+					bedOrChamber->index,
 					isBed ? evAdjustBedStandbyTemp : evAdjustChamberStandbyTemp,
-					bedOrChamber->heater
+					bedOrChamber->index
 					);
 			mgr.Show(extrusionFactors[slot], false);
 			toolButtons[slot]->SetEvent(isBed ? evSelectBed : evSelectChamber, bedOrChamber->index);

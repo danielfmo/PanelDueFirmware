@@ -16,6 +16,7 @@
 #undef value
 #include "UI/ColourSchemes.hpp"
 #include "ObjectModel/PrinterStatus.hpp"
+#include "FlashData.hpp"
 #include "Configuration.hpp"
 
 #define CSTRING const char * const _ecv_array
@@ -163,6 +164,10 @@ struct StringTable
 	CSTRING displayDimmingNames[(unsigned int)DisplayDimmerType::NumTypes];
 
 	CSTRING heaterCombineTypeNames[(unsigned int)HeaterCombineType::NumTypes];
+
+	CSTRING outOfRangeValueInt;
+	CSTRING outOfRangeValueFloat;
+	CSTRING outOfRangeTextLength;
 
 	struct {
 		CSTRING currentRpm;
@@ -331,6 +336,10 @@ const StringTable LanguageTables[] =
 			"Heaters comb.",
 		},
 
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
+
 		// Spindle
 		{
 			"Current",
@@ -495,6 +504,10 @@ const StringTable LanguageTables[] =
 			"Heat's nicht komb.",
 			"Heat's kombiniert"
 		},
+
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
 
 		// Spindle
 		{
@@ -661,6 +674,10 @@ const StringTable LanguageTables[] =
 			"Heaters comb.",
 		},
 
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
+
 		// Spindle
 		{
 			"Current",
@@ -825,6 +842,10 @@ const StringTable LanguageTables[] =
 			"Heat's not comb.",
 			"Heaters comb.",
 		},
+
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
 
 		// Spindle
 		{
@@ -991,6 +1012,10 @@ const StringTable LanguageTables[] =
 			"Heaters comb.",
 		},
 
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
+
 		// Spindle
 		{
 			"Current",
@@ -1156,6 +1181,10 @@ const StringTable LanguageTables[] =
 			"Heaters comb.",
 		},
 
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
+
 		// Spindle
 		{
 			"Current",
@@ -1320,6 +1349,10 @@ const StringTable LanguageTables[] =
 			"Głowica prosta",
 			"Głowica inna",
 		},
+
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
 
 		// Spindle
 		{
@@ -1487,6 +1520,10 @@ const StringTable LanguageTables[] =
 			"Heaters comb.",
 		},
 
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
+
 		// Spindle
 		{
 			"Current",
@@ -1649,6 +1686,10 @@ const StringTable LanguageTables[] =
 			"Нагреватели не комб.",
 			"Нагреватели комб.",
 		},
+
+		"value is out of range: %ld <= value <= %ld",
+		"value is out of range: %f <= value <= %f",
+		"text length is out of range: %ld <= length <= %ld",
 
 		// Spindle
 		{

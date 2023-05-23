@@ -19,7 +19,7 @@
 #include <UI/ColourSchemes.hpp>
 #include <UI/Display.hpp>
 #include <UI/Events.hpp>
-
+#include <UI/Strings.hpp>
 #include <General/String.h>
 #include <General/StringFunctions.h>
 
@@ -29,6 +29,10 @@ extern StaticTextField *debugField;
 extern StaticTextField *touchCalibInstruction;
 extern StaticTextField *messageTextFields[], *messageTimeFields[];
 extern TextField *fwVersionField;
+extern DrawDirect *fpThumbnail;
+
+
+extern const StringTable *strings;
 
 namespace UI
 {
