@@ -1083,8 +1083,8 @@ static void CreateBabystepAmountPopup(const ColourScheme& colours)
 // Create the feedrate amount adjustment popup
 static void CreateFeedrateAmountPopup(const ColourScheme& colours)
 {
-	static const char* const feedrateText[] = {"600", "1200", "2400", "6000", "12000"};
-	static const int values[] = { 600, 1200, 2400, 6000, 12000 };
+	static const char* const feedrateText[] = {"200", "300", "400", "600", "900"};
+	static const int values[] = { 200, 300, 400, 600, 900 };
 	feedrateAmountPopup = CreateIntPopupBar(colours, fullPopupWidth, ARRAY_SIZE(feedrateText), feedrateText, values, evAdjustFeedrate, evAdjustFeedrate);
 }
 
@@ -1484,6 +1484,7 @@ static void CreateCommonPendantFields(const ColourScheme &colours)
 {
 	mgr.SetRoot(nullptr);
 
+	// Add footer menu
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour, colours.buttonBorderColour, colours.buttonGradColour,
 									colours.buttonPressedBackColour, colours.buttonPressedGradColour, colours.pal);
 	tabJog = AddTextToggleButton(rowTabsP, 0, 4, strings->jog, evTabJog, nullptr, DisplayXP);
@@ -1514,15 +1515,15 @@ static void CreatePendantJogTabFields(const ColourScheme& colours)
 	const PixelNumber jogBlock = row2P;
 	const PixelNumber secondBlock = row9P;
 
-	const unsigned int axisCol = 1;
 	const unsigned int movementCol = 0;
+	const unsigned int axisCol = 1;
 	const unsigned int currentPosCol = 2;
 	const unsigned int homingCol = 0;
 	const unsigned int toolsCol = 1;
 	const unsigned int extrudeCol = 2;
 
-	mgr.AddField(new StaticTextField(jogBlock, CalcXPos(axisCol, colWidth),			colWidth, TextAlignment::Centre, strings->axis));
 	mgr.AddField(new StaticTextField(jogBlock, CalcXPos(movementCol, colWidth),		colWidth, TextAlignment::Centre, strings->movement));
+	mgr.AddField(new StaticTextField(jogBlock, CalcXPos(axisCol, colWidth),			colWidth, TextAlignment::Centre, strings->axis));
 	mgr.AddField(new StaticTextField(jogBlock, CalcXPos(currentPosCol, colWidth),	colWidth, TextAlignment::Centre, strings->currentLocation));
 
 	mgr.AddField(new StaticTextField(secondBlock, CalcXPos(homingCol, colWidth),	colWidth, TextAlignment::Centre, strings->homing));
@@ -1534,7 +1535,7 @@ static void CreatePendantJogTabFields(const ColourScheme& colours)
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 
-	static const float jogAmountValues[] = { 0.01, 0.10, 1.00, 10.00  };
+	static const float jogAmountValues[] = { 0.01, 0.10, 1.00, 10.00 };
 
 	// Distance per click
 	currentJogAmount = CreateFloatButtonColumn(

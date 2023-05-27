@@ -60,18 +60,18 @@ extern uint16_t _esplash[];							// defined in linker script
 
 // Controlling constants
 constexpr uint32_t defaultPrinterPollInterval = 500;	// poll interval in milliseconds
-constexpr uint32_t printerResponseTimeout = 2000;	// shortest time after a response that we send another poll (gives printer time to catch up)
+constexpr uint32_t printerResponseTimeout = 2000;		// shortest time after a response that we send another poll (gives printer time to catch up)
 
-constexpr uint32_t slowPrinterPollInterval = 4000;		// poll interval in milliseconds when screensaver active
+constexpr uint32_t slowPrinterPollInterval = 500;		// poll interval in milliseconds when screensaver active
 
-const uint32_t touchBeepLength = 20;				// beep length in ms
-const uint32_t touchBeepFrequency = 4500;			// beep frequency in Hz. Resonant frequency of the piezo sounder is 4.5kHz.
+const uint32_t touchBeepLength = 20;					// beep length in ms
+const uint32_t touchBeepFrequency = 4500;				// beep frequency in Hz. Resonant frequency of the piezo sounder is 4.5kHz.
 
 const uint32_t errorBeepLength = 100;
 const uint32_t errorBeepFrequency = 2250;
 
-const uint32_t normalTouchDelay = 250;				// how long we ignore new touches for after pressing Set
-const uint32_t repeatTouchDelay = 100;				// how long we ignore new touches while pressing up/down, to get a reasonable repeat rate
+const uint32_t normalTouchDelay = 200;					// how long we ignore new touches for after pressing Set
+const uint32_t repeatTouchDelay = 50;					// how long we ignore new touches while pressing up/down, to get a reasonable repeat rate
 
 const int parserMinErrors = 2;
 
@@ -111,9 +111,9 @@ UTouch touch(23, 24, 22, 21, 20);
 // If one of the fields in the disabled ones need to be fetched the
 // corresponding define has to be set to (1)
 #define FETCH_BOARDS		(1)
-#define FETCH_DIRECTORIES	(0)
+#define FETCH_DIRECTORIES	(1)
 #define FETCH_FANS			(0)
-#define FETCH_GLOBAL			(1)
+#define FETCH_GLOBAL		(1)
 #define FETCH_HEAT			(1)
 #define FETCH_INPUTS		(0)
 #define FETCH_JOB			(1)
