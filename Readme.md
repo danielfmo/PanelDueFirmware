@@ -1,3 +1,17 @@
+# CNC-Pendant-Firmware
+This is a derivative work of diabase's fork of PanelDueFirmware that provides a
+portrait orientation UI in addition to the original UI.
+The portrait UI is optimized for use as a Pendant.
+Various functions can (only) be controlled via an encoder wheel.
+
+![Jog panel](images/ui_1.jpg)
+
+![Offset panel](images/ui_2.jpg)
+
+![Job Panel](images/ui_3.jpg)
+
+# Original README
+
 # PanelDueFirmware
 
 This firmware runs on PanelDue touchscreens available from Duet3D Ltd. and
