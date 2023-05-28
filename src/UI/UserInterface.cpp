@@ -102,7 +102,7 @@ static StaticTextField *moveAxisRows[MaxDisplayableAxes];
 static StaticTextField *nameField, *statusField;
 static StaticTextField *screensaverText;
 static IntegerButton *activeTemps[MaxSlots], *standbyTemps[MaxSlots];
-static IntegerButton *spd, *extrusionFactors[MaxSlots], *fanSpeed, *baudRateButton, *volumeButton, *infoTimeoutButton, *screensaverTimeoutButton, *feedrateAmountButton;
+static IntegerButton *spd, *extrusionFactors[MaxSlots], *fanSpeed, *baudRateButton, *volumeButton, *infoTimeoutButton, *screensaverTimeoutButton, *feedrateAmountButton, *feedrateAmountButtonP;
 static TextButton *languageButton, *coloursButton, *dimmingTypeButton, *heaterCombiningButton;
 static TextButtonWithLabel *babystepAmountButton;
 static SingleButton *moveButton, *extrudeButton, *macroButton;
@@ -115,7 +115,7 @@ static void (*keyboardDataHandler)(const char *data) = nullptr;
 // private fields
 static TextButton *macroButtonsP[NumDisplayedMacrosP];
 static FileListButtons macrosListButtonsP;
-static PopupWindow *setTempPopupEncoder, *macrosPopupP, *areYouSurePopupP, *extrudePopupP, *wcsOffsetsPopup;
+static PopupWindow *setTempPopupEncoder, *macrosPopupP, *areYouSurePopupP, *extrudePopupP, *wcsOffsetsPopup, *feedrateAmountPopupP;
 
 static StaticTextField* wcsOffsetLabel[ARRAY_SIZE(jogAxes)];
 static const size_t wcsOffsetTextMaxLen = 24;
@@ -1088,6 +1088,14 @@ static void CreateFeedrateAmountPopup(const ColourScheme& colours)
 	feedrateAmountPopup = CreateIntPopupBar(colours, fullPopupWidth, ARRAY_SIZE(feedrateText), feedrateText, values, evAdjustFeedrate, evAdjustFeedrate);
 }
 
+// Create the feedrate amount adjustment popup for portrait orienttion
+static void CreateFeedrateAmountPopupP(const ColourScheme& colours)
+{
+	static const char* const feedrateText[] = {"200", "300", "400", "600", "900"};
+	static const int values[] = { 200, 300, 400, 600, 900 };
+	feedrateAmountPopupP = CreateIntPopupBar(colours, fullPopupWidthP, ARRAY_SIZE(feedrateText), feedrateText, values, evAdjustFeedrate, evAdjustFeedrate);
+}
+
 // Create the colour scheme change popup
 static void CreateColoursPopup(const ColourScheme& colours)
 {
@@ -1471,6 +1479,7 @@ static DisplayField *CreateSetupTabFields(uint32_t language, const ColourScheme&
 
 	feedrateAmountButton = AddIntegerButton(row7, 2, 3, strings->feedrate, nullptr, evSetFeedrate);
 	feedrateAmountButton->SetValue(nvData.GetFeedrate());
+	feedrateAmountButtonP->SetValue(nvData.GetFeedrate());
 
 	heaterCombiningButton  = AddTextButton(row8, 0, 3, strings->heaterCombineTypeNames[(unsigned int)nvData.GetHeaterCombineType()], evSetHeaterCombineType, nullptr);
 
@@ -1553,6 +1562,11 @@ static void CreatePendantJogTabFields(const ColourScheme& colours)
 			2,
 			nullptr,
 			true);
+
+	// Feedrate
+	feedrateAmountButtonP = AddIntegerButton(row8, movementCol, 3, strings->feedrate, nullptr, evSetFeedrate);
+	feedrateAmountButtonP->SetValue(nvData.GetFeedrate());
+	feedrateAmountButton->SetValue(nvData.GetFeedrate());
 
 	// Axis selection
 	currentJogAxis = CreateStringButtonColumn(
@@ -1795,6 +1809,7 @@ void CreatePendantRoot(const ColourScheme& colours)
 	// Pop-ups
 	CreateAreYouSurePopupPortrait(colours);
 	CreateExtrudePopupP(colours);
+	CreateFeedrateAmountPopupP(colours);
 	CreateWCSOffsetsPopup(colours);
 	macrosPopupP = CreateFileListPopup(macrosListButtonsP, macroButtonsP, NumMacroRowsP, NumMacroColumnsP, colours, false, MacroListPopupHeightP, MacroListPopupWidthP);
 	alertPopupP = new AlertPopupP(colours);
@@ -3378,7 +3393,7 @@ namespace UI
 		case evAdjustInfoTimeout:
 		case evAdjustScreensaverTimeout:
 		case evAdjustBabystepAmount:
-		case evAdjustFeedrate:
+		// case evAdjustFeedrate:
 		case evAdjustColours:
 		case evAdjustLanguage:
 			break;
@@ -4149,7 +4164,13 @@ namespace UI
 
 			case evSetFeedrate:
 				Adjusting(bp);
-				mgr.SetPopup(feedrateAmountPopup, AutoPlace, popupY);
+				if (isLandscape)
+				{
+					mgr.SetPopup(feedrateAmountPopup, AutoPlace, popupY);
+				}
+				else {
+					mgr.SetPopupP(feedrateAmountPopupP, AutoPlace, AutoPlace);
+				}
 				break;
 
 			case evSetColours:
@@ -4208,8 +4229,10 @@ namespace UI
 					uint32_t feedrate = bp.GetIParam();
 					nvData.SetFeedrate(feedrate);
 					feedrateAmountButton->SetValue(feedrate);
+					feedrateAmountButtonP->SetValue(feedrate);
 				}
 				TouchBeep();									// give audible feedback of the touch at the new volume level
+				mgr.ClearPopup();
 				break;
 
 			case evAdjustColours:
