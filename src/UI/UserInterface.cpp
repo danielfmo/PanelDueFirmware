@@ -2100,7 +2100,7 @@ namespace UI
 				if (axisIndex < ARRAY_SIZE(jogAxes))
 				{
 					SafeSnprintf(wcsOffsetText[axisIndex], ARRAY_SIZE(wcsOffsetText[axisIndex]),
-						"%s %1f", jogAxes[axisIndex], fval);
+						"%s %1f", jogAxes[axisIndex], (double)fval);
 					wcsOffsetText[axisIndex][ARRAY_SIZE(wcsOffsetText[axisIndex]) - 1] = '\0';
 					wcsOffsetLabel[axisIndex]->SetValue(wcsOffsetText[axisIndex]);
 
@@ -2702,7 +2702,7 @@ namespace UI
 						axisLetter,
 						axisIndex,
 						workplaceIndex,
-						changeAmount);
+						(double)changeAmount);
 				axisValue->SetValue(axisValue->GetValue()+changeAmount);
 				lastEncoderCommandSentAt = SystemTick::GetTickCount();
 			}
@@ -2714,9 +2714,8 @@ namespace UI
 			if (currentJogAxis.IsValid() && currentJogAmount.IsValid())
 			{
 				float jogAmount = currentJogAmount.GetFParam();
-				const unsigned int feedRate = jogAmount < 5.0f ? 6000 : 12000;
 				TextButtonForAxis *textButton = static_cast<TextButtonForAxis*>(currentJogAxis.GetButton());
-				SerialIo::Sendf("G91 G0 %c%.3f F%d G90\n", textButton->GetAxisLetter(), change * jogAmount, feedRate);
+				SerialIo::Sendf("G91 G1 %c%.3f F%d G90\n", textButton->GetAxisLetter(), (double)(change * jogAmount), nvData.GetFeedrate());
 				lastEncoderCommandSentAt = SystemTick::GetTickCount();
 			}
 		}
@@ -3393,7 +3392,7 @@ namespace UI
 		case evAdjustInfoTimeout:
 		case evAdjustScreensaverTimeout:
 		case evAdjustBabystepAmount:
-		// case evAdjustFeedrate:
+		case evAdjustFeedrate:
 		case evAdjustColours:
 		case evAdjustLanguage:
 			break;

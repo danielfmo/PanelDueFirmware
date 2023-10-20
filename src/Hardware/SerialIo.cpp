@@ -247,7 +247,7 @@ namespace SerialIo
 	// SendFloat will convert a float into a rounded fixed 3 decimal representation.
 	void SendFloat(float f)
 	{
-		Sendf("%.3f", f);
+		Sendf("%.3f", (double)f);
 	}
 
 	// Receive data processing

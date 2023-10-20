@@ -65,8 +65,7 @@ const uint32_t DefaultInfoTimeout = 5;					// information message timeout in sec
 const uint8_t DefaultBabystepAmountIndex = 1;			// default babystep amount of 0.02mm
 const uint16_t DefaultFeedrate = 6000;					// default feedrate in mm/min
 
-const uint32_t MinimumEncoderCommandInterval = 50;		// minimum time in milliseconds between serial commands sent due to encoder movement
-const uint32_t MaxEncoderCommandLength = 64;			// maximum length of an encoder movement command
+const uint32_t MinimumEncoderCommandInterval = 200;		// minimum time in milliseconds between serial commands sent due to encoder movement
 
 const size_t MaxFilnameLength = 120;
 
