@@ -50,7 +50,7 @@ enum Event : uint8_t
 	evMoveSelectAxis,
 	evExtrudeAmount, evExtrudeRate, evExtrude, evRetract,
 	evHomeAxis,
-	
+
 	evMoveAxisP,
 	evExtrudeAmountP, evExtrudeRateP,
 	evWCSDisplaySelect, evActivateWCS,
@@ -67,7 +67,6 @@ enum Event : uint8_t
 	evSendCommand,
 	evFactoryReset,
 	evAdjustSpeed,
-	evPAdjustExtrusionPercent, // TODO: remove as soon as we have extruder number
 
 	evScrollFiles, evScrollMacros, evFilesUp, evMacrosUp, evChangeCard,
 

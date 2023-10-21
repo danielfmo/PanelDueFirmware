@@ -211,6 +211,13 @@ const unsigned int NumDisplayedFiles = NumFileColumns * NumFileRows;
 const PixelNumber fileListPopupWidth = fullPopupWidth;
 const PixelNumber fileListPopupHeight = ((NumFileRows + 1) * buttonHeight) + (NumFileRows * fileButtonRowSpacing) + (2 * popupTopMargin);
 
+const unsigned int NumFileColumnsP = 1;
+const unsigned int NumFileRowsP = (fullPopupHeightP - rowHeightP -(2 * popupTopMargin) + fileButtonRowSpacing)/(buttonHeight + fileButtonRowSpacing) - 1;
+const unsigned int NumDisplayedFilesP = NumFileColumnsP * NumFileRowsP;
+
+const PixelNumber fileListPopupWidthP = fullPopupWidthP;
+const PixelNumber fileListPopupHeightP = ((NumFileRowsP + 1) * buttonHeight) + (NumFileRowsP * fileButtonRowSpacing) + (2 * popupTopMargin);
+
 const unsigned int NumMacroColumns = 2;
 const unsigned int NumMacroRows = (fullPopupHeight - (2 * popupTopMargin) + fileButtonRowSpacing)/(buttonHeight + fileButtonRowSpacing) - 1;
 const unsigned int NumDisplayedMacros = NumMacroColumns * NumMacroRows;
@@ -220,7 +227,6 @@ const PixelNumber MacroListPopupHeight = ((NumMacroRows + 1) * buttonHeight) + (
 
 const unsigned int NumMacroColumnsP = 1;
 const unsigned int NumMacroRowsP = (fullPopupHeightP - rowHeightP - (2 * popupTopMargin) + fileButtonRowSpacing)/(buttonHeight + fileButtonRowSpacing) - 1;
-//const unsigned int NumMacroRowsP = NumMacroRows;
 const unsigned int NumDisplayedMacrosP = NumMacroColumnsP * NumMacroRowsP;
 
 const PixelNumber MacroListPopupWidthP = fullPopupWidthP;

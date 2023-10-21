@@ -94,7 +94,7 @@ static TextButtonWithLabel *babystepMinusButton, *babystepPlusButton;
 static IntegerField *fpSizeField, *fpFilamentField, *filePopupTitleField;
 static ProgressBar *printProgressBar;
 static SingleButton *tabControl, *tabStatus, *tabMsg, *tabSetup, *tabPortrait;
-static ButtonBase *filesButton, *pauseButton, *resumeButton, *cancelButton, *babystepButton, *reprintButton;
+static ButtonBase *filesButton, *filesButtonP, *pauseButton, *resumeButton, *cancelButton, *babystepButton, *reprintButton;
 static TextField *timeLeftField, *zProbe;
 static TextField *fpNameField, *fpGeneratedByField, *fpLastModifiedField, *fpPrintTimeField;
 DrawDirect *fpThumbnail;
@@ -114,8 +114,9 @@ static void (*keyboardDataHandler)(const char *data) = nullptr;
 
 // private fields
 static TextButton *macroButtonsP[NumDisplayedMacrosP];
-static FileListButtons macrosListButtonsP;
-static PopupWindow *setTempPopupEncoder, *macrosPopupP, *areYouSurePopupP, *extrudePopupP, *wcsOffsetsPopup, *feedrateAmountPopupP;
+static TextButton *filenameButtonsP[NumDisplayedFilesP];
+static FileListButtons macrosListButtonsP, filesListButtonsP;
+static PopupWindow *setTempPopupEncoder, *macrosPopupP, *fileListPopupP, *areYouSurePopupP, *extrudePopupP, *wcsOffsetsPopup, *feedrateAmountPopupP;
 
 static StaticTextField* wcsOffsetLabel[ARRAY_SIZE(jogAxes)];
 static const size_t wcsOffsetTextMaxLen = 24;
@@ -136,7 +137,7 @@ static ProgressBar *printProgressBarP;
 static SingleButton *tabJog, *tabOffset, *tabJob, *tabLandscape;
 static ButtonBase *resumeButtonP, *pauseButtonP, *resetButtonP;
 static StaticTextField *jobTextField;
-static IntegerButton *feedrateButtonP, *extruderPercentButtonP, *spindleRPMButtonP;
+static IntegerButton *feedrateButtonP, *spindleRPMButtonP;
 static StaticTextField *screensaverTextP;
 static StaticTextField *nameFieldP, *statusFieldP;
 static StaticTextField *currentTempTextPJog, *activeTempTextPJog, *standbyTempTextPJog;
@@ -1624,13 +1625,13 @@ static void CreatePendantJogTabFields(const ColourScheme& colours)
 	}
 
 	// Extrusion/Heating
-	// Add the current temperature field
+	// Add the current Spindle Speed
 	DisplayField::SetDefaultColours(colours.infoTextColour, colours.defaultBackColour);
 	currentTempPJog = new FloatField(secondBlock + 1 * rowHeightP, CalcXPos(extrudeCol, colWidth), colWidth, TextAlignment::Centre, 1);
 	currentTempPJog->SetValue(0.0);
 	mgr.AddField(currentTempPJog);
 
-	// Add the active temperature button
+	// Add the active/set Spindle Speed
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 	activeTempPJog = AddIntegerButton(secondBlock + 3 * rowHeightP, extrudeCol, 3, nullptr, nullptr, evAdjustToolActiveTemp, DisplayXP);
 	activeTempPJog->SetValue(0);
@@ -1640,11 +1641,6 @@ static void CreatePendantJogTabFields(const ColourScheme& colours)
 	standbyTempPJog = AddIntegerButton(secondBlock + 5 * rowHeightP, extrudeCol, 3, nullptr, nullptr, evAdjustToolStandbyTemp, DisplayXP);
 	standbyTempPJog->SetValue(0);
 	standbyTempPJog->SetEvent(evAdjustToolStandbyTemp, (int)-1);
-
-	// Add the Extrude popup button
-	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	AddTextButton(secondBlock + 6 * rowHeightP, extrudeCol, 3, strings->extrusion, evExtrudePopup, nullptr, DisplayXP);
-
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 	pendantJogRoot = mgr.GetRoot();
@@ -1726,71 +1722,21 @@ void CreatePendantJobTabFields(const ColourScheme& colours)
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 	// Speed button
-	feedrateButtonP = AddIntegerButton(row6P, 0, 2, strings->speed, "%", evAdjustSpeed, DisplayXP);
+	feedrateButtonP = AddIntegerButton(row6P, 0, 1, strings->speed, "%", evAdjustSpeed, DisplayXP);
 	feedrateButtonP->SetValue(100);
 	feedrateButtonP->SetEvent(evAdjustSpeed, "M220 S");
-	extruderPercentButtonP = AddIntegerButton(row6P, 1, 2, strings->extruderShort, "%", evPAdjustExtrusionPercent, DisplayXP);
-	extruderPercentButtonP->SetValue(100);
-	extruderPercentButtonP->SetEvent(evPAdjustExtrusionPercent, "M221 S");
 
+	// Spindle button
 	spindleRPMButtonP = AddIntegerButton(row7P, 0, 1, strings->spindleRPM, nullptr, evAdjustActiveRPM, DisplayXP);
 	spindleRPMButtonP->SetValue(0);
 
-	// Heating control
+	// Load sd card files
 	DisplayField::SetDefaultColours(colours.titleBarTextColour, colours.titleBarBackColour);
-	mgr.AddField(new StaticTextField(row8P + ((rowHeightP)/3), xPos, fullWidth, TextAlignment::Centre, strings->heatControl));
+	mgr.AddField(new StaticTextField(row10P + ((rowHeightP)/3), xPos, fullWidth, TextAlignment::Centre, "Load Files"));
 
-	const PixelNumber iconWidth = 50;
-	const PixelNumber iconColWidth = margin + iconWidth;
-	const PixelNumber currentColWidth = 140;
-	const PixelNumber activeColWidth = 128;
-	const PixelNumber standbyColWidth = 154;
-	const PixelNumber iconCol = margin;
-	const PixelNumber currentCol = iconCol + iconColWidth + margin - 8;
-	const PixelNumber activeCol = currentCol + currentColWidth + margin;
-	const PixelNumber standbyCol = activeCol + activeColWidth + margin;
+	// SD files button
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
-	mgr.AddField(new StaticTextField(row9P, currentCol, currentColWidth, TextAlignment::Centre, strings->current));
-	mgr.AddField(new StaticTextField(row9P, activeCol, activeColWidth, TextAlignment::Centre, strings->active));
-	mgr.AddField(new StaticTextField(row9P, standbyCol, standbyColWidth, TextAlignment::Centre, strings->standby));
-
-	// Add the grid
-	for (unsigned int i = 0; i < 6; ++i)
-	{
-		const PixelNumber row = row10P + i * rowHeightP;
-
-		// Add the icon button
-		DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonImageBackColour);
-		IconButtonWithText * const b = new IconButtonWithText(row, iconCol, iconWidth, IconNozzle, evSelectHead, i, i);
-		b->Show(false);
-		toolButtonsPJob[i] = b;
-		mgr.AddField(b);
-
-		// Add the current temperature field
-		DisplayField::SetDefaultColours(colours.infoTextColour, colours.defaultBackColour);
-		FloatField * const f = new FloatField(row + labelRowAdjust, currentCol+25, tempButtonWidth, TextAlignment::Centre, 1);
-		f->SetValue(0.0);
-		f->Show(false);
-		currentTempsPJob[i] = f;
-		mgr.AddField(f);
-
-		// Add the active temperature button
-		DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-		IntegerButton *ib = new IntegerButton(row, activeCol+20, tempButtonWidth);
-		ib->SetEvent(evAdjustToolActiveTemp, (int)i);
-		ib->SetValue(0);
-		ib->Show(false);
-		activeTempsPJob[i] = ib;
-		mgr.AddField(ib);
-
-		// Add the standby temperature button
-		ib = new IntegerButton(row, standbyCol+30, tempButtonWidth);
-		ib->SetEvent(evAdjustToolStandbyTemp, (int)i);
-		ib->SetValue(0);
-		ib->Show(false);
-		standbyTempsPJob[i] = ib;
-		mgr.AddField(ib);
-	}
+	filesButtonP = AddIconButton(row12P, 0, 3, IconFiles, evListFiles, nullptr, DisplayXP);
 
 	pendantJobRoot = mgr.GetRoot();
 }
@@ -1812,6 +1758,7 @@ void CreatePendantRoot(const ColourScheme& colours)
 	CreateFeedrateAmountPopupP(colours);
 	CreateWCSOffsetsPopup(colours);
 	macrosPopupP = CreateFileListPopup(macrosListButtonsP, macroButtonsP, NumMacroRowsP, NumMacroColumnsP, colours, false, MacroListPopupHeightP, MacroListPopupWidthP);
+	fileListPopupP = CreateFileListPopup(filesListButtonsP, filenameButtonsP, NumFileRowsP, NumFileColumnsP, colours, true, fileListPopupHeightP, fileListPopupWidthP);
 	alertPopupP = new AlertPopupP(colours);
 
 	LandscapeDisplay(false);
@@ -1969,6 +1916,7 @@ namespace UI
 		mgr.Show(babystepButton,	true);
 		mgr.Show(reprintButton,		lastJobFileNameAvailable);
 		mgr.Show(filesButton,		true);
+		mgr.Show(filesButtonP,		true);
 	}
 
 	// This is called when a job is active
@@ -1979,6 +1927,7 @@ namespace UI
 		mgr.Show(resumeButton,		false);
 		mgr.Show(cancelButton,		false);
 		mgr.Show(filesButton,		false);
+		mgr.Show(filesButtonP,		false);
 		mgr.Show(reprintButton,		false);
 
 		mgr.Show(resumeButtonP,		false);
@@ -1999,6 +1948,7 @@ namespace UI
 		// otherwise remnants of the to-be-hidden might remain
 		mgr.Show(pauseButton,		false);
 		mgr.Show(filesButton,		false);
+		mgr.Show(filesButtonP,		false);
 		mgr.Show(reprintButton,		false);
 
 		mgr.Show(pauseButtonP,		false);
@@ -2223,7 +2173,6 @@ namespace UI
 			mgr.Show(activeTempPJog, false);
 			mgr.Show(standbyTempTextPJog, false);
 			mgr.Show(standbyTempPJog, false);
-			mgr.Show(extruderPercentButtonP, false);
 			mgr.Show(spindleRPMButtonP, false);
 			UpdateField(activeTempPJog, 0);
 			UpdateField(standbyTempPJog, 0);
@@ -2235,7 +2184,6 @@ namespace UI
 			if (tool != nullptr)
 			{
 				const bool hasHeater = tool->heaters[0] != nullptr;
-				const bool hasExtruder = tool->extruders.IsNonEmpty();
 				const bool hasSpindle = tool->spindle != nullptr;
 
 				currentTempTextPJog->SetValue(hasSpindle ? strings->spindle.currentRpm : strings->current, true);
@@ -2245,7 +2193,6 @@ namespace UI
 				mgr.Show(activeTempPJog, hasHeater || hasSpindle);
 				mgr.Show(standbyTempTextPJog, hasHeater);
 				mgr.Show(standbyTempPJog, hasHeater);
-				mgr.Show(extruderPercentButtonP, hasExtruder);
 				mgr.Show(spindleRPMButtonP, hasSpindle);
 				standbyTempPJog->SetEvent(standbyTempPJog->GetEvent(), tool->index);
 
@@ -2662,11 +2609,6 @@ namespace UI
 					newValue = constrain<int>(newValue + change, 1, 1000);
 					break;
 
-				case evPAdjustExtrusionPercent:
-					newValue += change;
-					newValue = constrain<int>(newValue, 1, 1000);
-					break;
-
 				case evAdjustActiveRPM:
 					{
 						const uint8_t spindleRpmMultiplier = 100;
@@ -3074,10 +3016,6 @@ namespace UI
 			if (tool->extruders.IsBitSet(index) && tool->slot < MaxSlots)
 			{
 				UpdateField(extrusionFactors[tool->slot], ival);
-			}
-			if (tool->index == currentTool)
-			{
-				UpdateField(extruderPercentButtonP, ival);
 			}
 			return tool->slot < MaxSlots;
 		});
@@ -3560,7 +3498,6 @@ namespace UI
 			case evAdjustSpeed:
 			case evExtrusionFactor:
 			case evAdjustFan:
-			case evPAdjustExtrusionPercent:
 				oldIntValue = static_cast<IntegerButton*>(bp.GetButton())->GetValue();
 				Adjusting(bp);
 				if (isLandscape)
@@ -4425,7 +4362,6 @@ namespace UI
 			case evAdjustSpeed:
 			case evExtrusionFactor:
 			case evAdjustFan:
-			case evPAdjustExtrusionPercent:
 				static_cast<IntegerButton*>(fieldBeingAdjusted.GetButton())->SetValue(oldIntValue);
 				mgr.ClearPopup();
 				StopAdjusting();
@@ -4519,40 +4455,43 @@ namespace UI
 		}
 		else
 		{
-			mgr.SetPopupP((filesNotMacros) ? fileListPopup : macrosPopupP, AutoPlace, row2P);
+			mgr.SetPopupP((filesNotMacros) ? fileListPopupP : macrosPopupP, AutoPlace, row2P);
 		}
 	}
 
 	void FileListLoaded(bool filesNotMacros, int errCode)
 	{
 		FileListButtons& buttons = (filesNotMacros) ? filesListButtons : macrosListButtons;
+		FileListButtons& buttonsp = (filesNotMacros) ? filesListButtonsP : macrosListButtonsP;
+
 		if (errCode == 0)
 		{
 			mgr.Show(buttons.errorField, false);
 			// Portrait mode
-			mgr.Show(macrosListButtonsP.errorField, false);
+			mgr.Show(buttonsp.errorField, false);
 		}
 		else
 		{
 			buttons.errorField->SetValue(errCode);
 			mgr.Show(buttons.errorField, true);
 			// Portrait mode
-			macrosListButtonsP.errorField->SetValue(errCode);
-			mgr.Show(macrosListButtonsP.errorField, true);
+			buttonsp.errorField->SetValue(errCode);
+			mgr.Show(buttonsp.errorField, true);
 		}
 	}
 
 	void EnableFileNavButtons(bool filesNotMacros, bool scrollEarlier, bool scrollLater, bool parentDir)
 	{
 		FileListButtons& buttons = (filesNotMacros) ? filesListButtons : macrosListButtons;
+		FileListButtons& buttonsp = (filesNotMacros) ? filesListButtonsP : macrosListButtonsP;
 		mgr.Show(buttons.scrollLeftButton, scrollEarlier);
 		mgr.Show(buttons.scrollRightButton, scrollLater);
 		mgr.Show(buttons.folderUpButton, parentDir);
 
 		// Portrait mode
-		mgr.Show(macrosListButtonsP.scrollLeftButton, scrollEarlier);
-		mgr.Show(macrosListButtonsP.scrollRightButton, scrollLater);
-		mgr.Show(macrosListButtonsP.folderUpButton, parentDir);
+		mgr.Show(buttonsp.scrollLeftButton, scrollEarlier);
+		mgr.Show(buttonsp.scrollRightButton, scrollLater);
+		mgr.Show(buttonsp.folderUpButton, parentDir);
 	}
 
 	// Update the specified button in the file or macro buttons list. If 'text' is nullptr then hide the button, else display it.
@@ -4567,11 +4506,11 @@ namespace UI
 		}
 
 		// Portrait mode
-		if (buttonIndex < NumDisplayedMacrosP)
+		if (buttonIndex < ((filesNotMacros) ? NumDisplayedFilesP : NumDisplayedMacrosP))
 		{
-			TextButton * const fp = macroButtonsP[buttonIndex];
+			TextButton * const fp = ((filesNotMacros) ? filenameButtonsP : macroButtonsP)[buttonIndex];
 			fp->SetText(text);
-			fp->SetEvent((text == nullptr) ? evNull : evMacro, param);
+			fp->SetEvent((text == nullptr) ? evNull : (filesNotMacros) ? evFile : evMacro, param);
 			mgr.Show(fp, text != nullptr);
 		}
 	}
@@ -4613,7 +4552,7 @@ namespace UI
 		}
 		else
 		{
-			return NumMacroRowsP;
+			return (filesNotMacros) ? NumFileRowsP : NumMacroRowsP;
 		}
 	}
 
